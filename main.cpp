@@ -42,8 +42,8 @@ int main()
 {
     ConcurrentQueue<string> queueOfString;
 
-    auto w = async(std::launch::async, writer, std::ref(queueOfString), "New record at "+currentDate());
     auto r = async(launch::async, reader, std::ref(queueOfString));
+    auto w = async(std::launch::async, writer, std::ref(queueOfString), "New record at "+currentDate());
 
     r.wait();
     w.wait();  

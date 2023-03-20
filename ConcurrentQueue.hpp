@@ -4,6 +4,7 @@
 #include <iostream>
 #include <queue>
 #include <mutex>
+#include <condition_variable>
 
 class concurent_queue_exception : public std::runtime_error
 {
@@ -32,6 +33,7 @@ public:
 private:
     std::queue<T> container;
     std::mutex mt;
+    std::condition_variable cv;
 };
 
 template <typename T>
@@ -40,19 +42,16 @@ void ConcurrentQueue<T>::push ( const T& value )
     std::cout << "ConcurrentQueue<T>::push" << std::endl;
     const std::lock_guard<std::mutex> lock(mt);
     container.push(value);
+    cv.notify_all();
 }
 
 template <typename T>
 void ConcurrentQueue<T>::pop(T& value)
 {
     std::cout << "ConcurrentQueue<T>::pop" << std::endl;
-    const std::unique_lock<std::mutex> lock(mt);
+    std::unique_lock<std::mutex> lock(mt);
 
-    if (empty())
-    {
-        throw concurent_queue_exception ("Queue is empty");
-    }
-
+    cv.wait(lock, [this] {return !empty();});
     value = container.front();
     container.pop();
 }
